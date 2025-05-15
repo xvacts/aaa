@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: fb-thumbnail-scraper
+    env: python
+    buildCommand: ""
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    plan: free
+    envVars:
+      - key: FB_COOKIE
+        value: c_user=61572239312157; xs=39%3AG54MxeHz9RdHrQ%3A2%3A1743869443%3A-1%3A7944%3A%3AAcUuK9OEzeyjaRtj-Fy-ile3Rv8BuGycFo6B3HVXxDs; datr=r1XxZymo6qr1TJEcohdH2kmp; sb=xFXxZ6BO8ovR1pS80K5ABatP;
