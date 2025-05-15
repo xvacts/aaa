@@ -40,13 +40,14 @@ def get_fb_thumbnail():
         "Cookie": FB_COOKIE,
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
-        "Referer": "https://www.facebook.com/"
+        "Referer": "https://www.facebook.com/",
+        "Connection": "keep-alive"
     }
 
     try:
         logger.info(f"Fetching URL: {url}")
         resp = requests.get(url, headers=headers, timeout=10, allow_redirects=True)
-        resp.raise_for_status()  # Raise exception for bad status codes
+        resp.raise_for_status()
 
         # Log response for debugging
         logger.debug(f"Response status: {resp.status_code}")
@@ -66,17 +67,19 @@ def get_fb_thumbnail():
             logger.warning(f"No og:image found for URL: {url}")
             return jsonify({"error": "og:image not found. Page may require JavaScript rendering or valid authentication."}), 404
 
+    except requests.HTTPError as e:
+        logger.error(f"HTTP error for URL: {url} - {str(e)}")
+        if resp.status_code == 400:
+            return jsonify({"error": "Bad Request. Invalid or expired cookie, or Reel may be restricted."}), 400
+        elif resp.status_code == 403:
+            return jsonify({"error": "Access denied. Invalid or expired cookie, or page requires further authentication."}), 403
+        return jsonify({"error": f"HTTP error: {str(e)}"}), resp.status_code
     except requests.Timeout:
         logger.error(f"Request timed out for URL: {url}")
         return jsonify({"error": "Request timed out"}), 504
     except requests.ConnectionError:
         logger.error(f"Connection error for URL: {url}")
         return jsonify({"error": "Failed to connect to the server"}), 502
-    except requests.HTTPError as e:
-        logger.error(f"HTTP error for URL: {url} - {str(e)}")
-        if resp.status_code == 403:
-            return jsonify({"error": "Access denied. Invalid or expired cookie, or page requires further authentication."}), 403
-        return jsonify({"error": f"HTTP error: {str(e)}"}), resp.status_code
     except Exception as e:
         logger.error(f"Unexpected error for URL: {url} - {str(e)}")
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
